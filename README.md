@@ -2,7 +2,7 @@
 
 A small inventory app built to test [KantanDB](https://github.com/kantandb/server-go). It uses Bun on the server and Datastar in the browser.
 
-The project is still under construction. Right now it includes the application scaffold, KantanDB OpenAPI specs download, inventory validation, and a deterministic fixture generator.
+The project is still under construction. The backend now has inventory validation, fixture generation, KantanDB bootstrap, and a JSON CRUD API.
 
 ## Setup
 
