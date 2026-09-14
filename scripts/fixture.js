@@ -1,22 +1,11 @@
 import { rename } from "node:fs/promises";
-import { categories, listErrors } from "../src/inventory.js";
+import {
+	categories,
+	listErrors,
+	manufacturerSuggestions,
+} from "../src/inventory.js";
 
 export const fixtureSeed = 0x1a17ec;
-
-const manufacturers = [
-	"APC",
-	"Ciena",
-	"Cisco",
-	"CommScope",
-	"Corning",
-	"Ericsson",
-	"Fluke",
-	"Initech",
-	"Juniper Networks",
-	"Nokia",
-	"Ubiquiti",
-	"Vertiv",
-];
 const aisles = ["A", "B", "C", "D", "E", "F", "G", "H"];
 const products = {
 	network_equipment: ["Router", "Switch", "Gateway"],
@@ -108,7 +97,7 @@ export function makeFixture(count, seed = fixtureSeed) {
 
 	for (let index = 0; index < uniqueCount; index += 1) {
 		const category = pick(categories, next);
-		const manufacturer = pick(manufacturers, next);
+		const manufacturer = pick(manufacturerSuggestions, next);
 
 		items.push({
 			name: `${manufacturer} ${pick(products[category], next)} ${String(index + 1).padStart(4, "0")}`,

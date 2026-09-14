@@ -1,5 +1,6 @@
 import { createApi } from "./api.js";
 import { KantanClient } from "./kantan.js";
+import { createUi } from "./ui.js";
 
 export function appPort(value = Bun.env.APP_PORT) {
 	return Number(value ?? 8081);
@@ -7,11 +8,14 @@ export function appPort(value = Bun.env.APP_PORT) {
 
 export function createApp(client = new KantanClient()) {
 	const api = createApi(client);
+	const ui = createUi(client);
 
 	return async function fetch(request) {
-		const response = await api(request);
-
-		return response ?? new Response("Initech Inventory\n");
+		return (
+			(await api(request)) ??
+			(await ui(request)) ??
+			new Response("Not found", { status: 404 })
+		);
 	};
 }
 

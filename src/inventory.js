@@ -15,6 +15,21 @@ export const categories = Object.freeze([
 	"spare_parts",
 ]);
 
+export const manufacturerSuggestions = Object.freeze([
+	"APC",
+	"Ciena",
+	"Cisco",
+	"CommScope",
+	"Corning",
+	"Ericsson",
+	"Fluke",
+	"Initech",
+	"Juniper Networks",
+	"Nokia",
+	"Ubiquiti",
+	"Vertiv",
+]);
+
 export const indexes = Object.freeze([
 	{ name: "name", path: "/name" },
 	{ name: "category", path: "/category" },
