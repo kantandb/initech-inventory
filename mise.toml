@@ -59,6 +59,10 @@ run = "bun run dev"
 description = "Start the application"
 run = "bun run start"
 
+[tasks.browser-install]
+description = "Install the Playwright browser"
+run = "bun run browser:install"
+
 [tasks.test]
 description = "Run tests"
 run = "bun run test"

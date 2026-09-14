@@ -133,13 +133,13 @@ export function renderModal(item) {
 	<section class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title" data-signals='${escape(JSON.stringify(values))}'>
 		<div class="modal-heading"><h2 id="modal-title">${editing ? "Edit item" : "Add item"}</h2><button class="close" aria-label="Close" data-on:click="@get('/ui/modal/close')">×</button></div>
 		<form data-on:submit="evt.preventDefault(); @${method}('${action}'${headers})">
-			<label>Name<input required data-bind:editName></label>
-			<label>Category<select data-bind:editCategory>${categories.map((category) => option(category, values.editCategory)).join("")}</select></label>
-			<label>Manufacturer<input required data-bind:editManufacturer></label>
-			<div class="form-row"><label>Part number<input pattern="[A-Z0-9]{4}-[A-Z0-9]{7}" data-bind:editPartOne></label><label>Second part number<input pattern="[A-Z0-9]{4}-[A-Z0-9]{7}" data-bind:editPartTwo></label></div>
-			<div class="form-row"><label>Quantity<input required type="number" min="0" max="100" data-bind:editQuantity></label><label>Warehouse<input required type="number" data-bind:editWarehouse></label></div>
-			<div class="form-row"><label>Aisle<input required data-bind:editAisle></label><label>Shelf<input required type="number" data-bind:editShelf></label></div>
-			<label class="reserved"><input type="checkbox" data-bind:editReserved> Reserved</label>
+			<label>Name<input required data-bind:edit-name></label>
+			<label>Category<select data-bind:edit-category>${categories.map((category) => option(category, values.editCategory)).join("")}</select></label>
+			<label>Manufacturer<input required data-bind:edit-manufacturer></label>
+			<div class="form-row"><label>Part number<input pattern="[A-Z0-9]{4}-[A-Z0-9]{7}" data-bind:edit-part-one></label><label>Second part number<input pattern="[A-Z0-9]{4}-[A-Z0-9]{7}" data-bind:edit-part-two></label></div>
+			<div class="form-row"><label>Quantity<input required type="number" min="0" max="100" data-bind:edit-quantity></label><label>Warehouse<input required type="number" data-bind:edit-warehouse></label></div>
+			<div class="form-row"><label>Aisle<input required data-bind:edit-aisle></label><label>Shelf<input required type="number" data-bind:edit-shelf></label></div>
+			<label class="reserved"><input type="checkbox" data-bind:edit-reserved> Reserved</label>
 			<div id="modal-error"></div>
 			<button class="primary" type="submit" data-indicator:saving data-attr:disabled="$saving"><span data-show="!$saving">Save item</span><span data-show="$saving">Saving…</span></button>
 		</form>
@@ -459,7 +459,7 @@ export function createUi(client) {
 				);
 			}
 			if (item && request.method === "DELETE") {
-				const signals = await requestSignals(request);
+				const signals = signalParams(url);
 				await inventory.delete(item[1], request.headers.get("if-match"));
 				const result = await inventory.list(
 					parseFilters(filterParams(signals)),

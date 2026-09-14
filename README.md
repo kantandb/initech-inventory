@@ -1,8 +1,8 @@
 # Initech Inventory
 
-A small inventory app built to test [KantanDB](https://github.com/kantandb/server-go). It uses Bun on the server and Datastar in the browser.
+A small inventory app built to test [KantanDB](https://github.com/kantandb/server-go).
 
-The project is still under construction. It now has a Datastar inventory UI, a JSON CRUD API, fixture generation, and local KantanDB bootstrap.
+Current state: a Datastar inventory UI, a JSON CRUD API, fixture generation, and local KantanDB bootstrap.
 
 ## Setup
 
@@ -40,8 +40,11 @@ The generated fixture size ~5000 records.
 
 ## Checks
 
+Install Playwright's browser once, then run the checks:
+
 ```sh
+mise run browser-install
 mise run check
 ```
 
-This runs Biome, Bun tests, and Playwright tests.
+This runs Biome, contract tests, integration tests, and the Playwright smoke test.

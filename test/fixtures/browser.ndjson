@@ -1,0 +1,2 @@
+{"name":"Alpha Router","category":"network_equipment","manufacturer":"Initech","part_numbers":["AAAA-AAAAAAA"],"quantity":10,"reserved":false,"location":{"warehouse":1,"aisle":"A","shelf":1}}
+{"name":"Beta Radio","category":"radio_equipment","manufacturer":"Nokia","part_numbers":["BBBB-BBBBBBB"],"quantity":20,"reserved":true,"location":{"warehouse":2,"aisle":"B","shelf":2}}

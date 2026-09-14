@@ -5,15 +5,19 @@
 	"scripts": {
 		"dev": "bun --watch src/server.js",
 		"start": "bun src/server.js",
-		"test": "bun run test:unit && bun run test:browser",
+		"test": "bun run test:unit && bun run test:contract && bun run test:integration && bun run test:browser",
 		"test:unit": "bun test test/unit",
-		"test:browser": "playwright test --pass-with-no-tests",
+		"test:contract": "bun scripts/openapi.js && bun test test/contract",
+		"test:integration": "bun test test/integration",
+		"test:browser": "PLAYWRIGHT_BROWSERS_PATH=.playwright playwright test",
+		"browser:install": "PLAYWRIGHT_BROWSERS_PATH=.playwright playwright install chromium",
 		"format": "biome format --write .",
 		"lint": "biome lint .",
 		"check": "biome check . && bun run test"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^2.5.13",
-		"@playwright/test": "^1.63.0"
+		"@playwright/test": "^1.63.0",
+		"yaml": "^2.9.1"
 	}
 }
