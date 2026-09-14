@@ -21,6 +21,31 @@ outputs = ["fixtures/inventory.ndjson"]
 description = "Regenerate the inventory fixture"
 run = "bun scripts/fixture.js --force"
 
+[tasks.key]
+description = "Create the KantanDB key when absent"
+run = "bun scripts/key.js"
+sources = ["scripts/key.js"]
+outputs = ["kantan.key"]
+
+[tasks.db]
+description = "Start KantanDB"
+depends = ["key"]
+run = "bun scripts/db.js"
+
+[tasks.bootstrap]
+description = "Create and populate the inventory database"
+depends = ["fixture", "key"]
+run = "bun scripts/bootstrap.js"
+
+[tasks.setup]
+description = "Prepare the local project"
+run = """
+mise run openapi
+mise run fixture
+mise run key
+bun scripts/setup.js
+"""
+
 [tasks.stats]
 description = "Show inventory fixture statistics"
 depends = ["fixture"]

@@ -6,19 +6,21 @@ The project is still under construction. Right now it includes the application s
 
 ## Setup
 
-Install the tools and generate local files:
+Install the tools, generate local files, and bootstrap KantanDB:
 
 ```sh
 mise install
-mise run openapi
-mise run fixture
+mise run setup
 ```
 
-Start the app at <http://localhost:8081>:
+Start KantanDB and the app in separate terminals:
 
 ```sh
+mise run db
 mise run dev
 ```
+
+The app listens at <http://localhost:8081>.
 
 ## Fixture statistics
 
