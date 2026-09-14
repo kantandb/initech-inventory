@@ -1,0 +1,19 @@
+{
+	"name": "initech-inventory",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"dev": "bun --watch src/server.js",
+		"start": "bun src/server.js",
+		"test": "bun run test:unit && bun run test:browser",
+		"test:unit": "bun test test/unit",
+		"test:browser": "playwright test --pass-with-no-tests",
+		"format": "biome format --write .",
+		"lint": "biome lint .",
+		"check": "biome check . && bun run test"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "^2.5.13",
+		"@playwright/test": "^1.63.0"
+	}
+}
