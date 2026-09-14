@@ -11,6 +11,21 @@ outputs = ["openapi.yaml"]
 description = "Refresh the KantanDB contract"
 run = "bun scripts/openapi.js --force"
 
+[tasks.fixture]
+description = "Generate the inventory fixture when absent"
+run = "bun scripts/fixture.js --force"
+sources = ["scripts/fixture.js", "src/inventory.js"]
+outputs = ["fixtures/inventory.ndjson"]
+
+[tasks.fixture-refresh]
+description = "Regenerate the inventory fixture"
+run = "bun scripts/fixture.js --force"
+
+[tasks.stats]
+description = "Show inventory fixture statistics"
+depends = ["fixture"]
+run = "bun scripts/stats.js"
+
 [tasks.dev]
 description = "Start development mode"
 run = "bun run dev"

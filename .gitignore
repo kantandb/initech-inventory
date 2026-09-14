@@ -2,6 +2,7 @@
 /kantan
 /data/
 /openapi.yaml
+/fixtures/inventory.ndjson
 *.key
 .env
 node_modules/
