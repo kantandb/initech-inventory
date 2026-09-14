@@ -1,0 +1,8 @@
+# Local build and data
+/kantan
+/data/
+*.key
+
+# notes
+*.md
+!README.md
