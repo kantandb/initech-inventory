@@ -1,6 +1,7 @@
 # Local build and data
 /kantan
 /data/
+/openapi.yaml
 *.key
 .env
 node_modules/
