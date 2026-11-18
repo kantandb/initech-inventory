@@ -11,13 +11,40 @@ test("uses the required OpenAPI 3.2 contract", () => {
 });
 
 test("client operations exist in the contract", () => {
-	expect(collection.get.operationId).toBe("listDocuments");
+	expect(collection.get.operationId).toBe("getDatabase");
 	expect(collection.post.operationId).toBe("createDocument");
 	expect(collection.query.operationId).toBe("queryDocuments");
 	expect(document.get.operationId).toBe("getDocument");
 	expect(document.patch.operationId).toBe("patchDocument");
 	expect(document.put.operationId).toBe("replaceDocument");
 	expect(document.delete.operationId).toBe("deleteDocument");
+});
+
+test("GET returns database info and QUERY returns document records", () => {
+	expect(
+		collection.get.responses["200"].content["application/json"].schema.$ref,
+	).toBe("#/components/schemas/DatabaseInfo");
+	expect(
+		contract.components.schemas.DocumentList.properties.documents.items.$ref,
+	).toBe("#/components/schemas/DocumentRecord");
+	expect(contract.components.schemas.DocumentRecord.required).toEqual([
+		"id",
+		"rev",
+		"doc",
+	]);
+	const { schema } = collection.query.requestBody.content["application/json"];
+	expect(schema.$ref).toBe("#/components/schemas/PathQuery");
+	expect(contract.components.schemas.PathQuery.oneOf).toEqual([
+		{ required: ["path", "value"], not: { required: ["index"] } },
+		{ required: ["index", "value"], not: { required: ["path"] } },
+		{
+			not: {
+				anyOf: ["index", "path", "op", "value"].map((field) => ({
+					required: [field],
+				})),
+			},
+		},
+	]);
 });
 
 test("mutation and query media types match the client", () => {
@@ -38,7 +65,7 @@ test("mutation and query media types match the client", () => {
 });
 
 test("client page sizes remain inside contract limits", () => {
-	const limit = contract.components.parameters.Limit.schema;
+	const limit = contract.components.schemas.PathQuery.properties.limit;
 
 	expect(limit.minimum).toBe(1);
 	expect(limit.maximum).toBeGreaterThanOrEqual(25);

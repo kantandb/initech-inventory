@@ -103,7 +103,7 @@ export class InventoryService {
 				value: part,
 				limit: 2,
 			});
-			if (result.documents.some((id) => id !== currentId)) {
+			if (result.documents.some(({ id }) => id !== currentId)) {
 				errors.push({
 					path: `/part_numbers/${index}`,
 					message: "must be globally unique",
@@ -129,19 +129,17 @@ export class InventoryService {
 		let cursor = filters.cursor;
 
 		do {
-			const page = await this.client.list({
+			const page = await this.client.query({
 				index: "name",
 				op: "ge",
 				value: "",
 				limit: filters.limit - items.length,
 				cursor,
 			});
-			const records = await Promise.all(
-				page.documents.map((id) => this.client.read(id)),
-			);
-			for (const record of records) {
-				if (matches(record.item, filters)) {
-					items.push({ ...record.item, id: record.id, etag: record.etag });
+			// Use snapshot records without fetching each document again.
+			for (const { id, rev, doc } of page.documents) {
+				if (matches(doc, filters)) {
+					items.push({ ...doc, id, etag: `"${rev}"` });
 				}
 			}
 			cursor = page.cursor || undefined;

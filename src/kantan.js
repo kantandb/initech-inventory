@@ -40,18 +40,8 @@ export class KantanClient {
 		return response;
 	}
 
-	async list({ limit = 25, cursor, index, op, value } = {}) {
-		const params = new URLSearchParams({ limit: String(limit) });
-		if (cursor) params.set("cursor", cursor);
-		if (index) {
-			params.set("index", index);
-			params.set("value", JSON.stringify(value));
-			if (op) params.set("op", op);
-		}
-
-		const response = await this.request(`${this.collection()}?${params}`);
-
-		return response.json();
+	async list({ limit = 25, cursor } = {}) {
+		return this.query({ limit, cursor });
 	}
 
 	async read(id) {
@@ -114,8 +104,8 @@ export class KantanClient {
 		};
 	}
 
-	async query({ path, value, op, limit = 25, cursor } = {}) {
-		const body = { path, value, limit };
+	async query({ index, path, value, op, limit = 25, cursor } = {}) {
+		const body = { index, path, value, limit };
 		if (op) body.op = op;
 		if (cursor) body.cursor = cursor;
 		const response = await this.request(this.collection(), {

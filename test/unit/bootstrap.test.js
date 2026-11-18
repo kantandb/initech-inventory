@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { bootstrap, waitHealth } from "../../scripts/bootstrap.js";
+import { indexes } from "../../src/inventory.js";
 
 function response(body, status = 200) {
 	return new Response(JSON.stringify(body), {
@@ -30,8 +31,8 @@ describe("bootstrap", () => {
 			if (url.endsWith("/healthz"))
 				return Promise.resolve(response({ status: "ok" }));
 			if (url.endsWith("/db")) return Promise.resolve(response({}, 201));
-			if (url.includes("?limit=1")) {
-				return Promise.resolve(response({ documents: [], cursor: "" }));
+			if (url.endsWith("/db/inventory")) {
+				return Promise.resolve(response({ doc_count: 0 }));
 			}
 
 			return Promise.resolve(response({ success: true, error: {} }));
@@ -44,6 +45,12 @@ describe("bootstrap", () => {
 		});
 
 		expect(result).toEqual({ created: true, imported: true });
+		expect(JSON.parse(requests[1].init.body)).toEqual({
+			name: "inventory",
+			indices: indexes,
+		});
+		expect(requests[2].url).toBe("http://database/db/inventory");
+		expect(requests[2].init.method ?? "GET").toBe("GET");
 		expect(requests.at(-1).url).toBe("http://database/bulk/inventory");
 		expect(requests.at(-1).init.headers).toEqual({
 			"content-type": "application/x-ndjson",
@@ -58,7 +65,7 @@ describe("bootstrap", () => {
 				return Promise.resolve(response({ status: "ok" }));
 			if (url.endsWith("/db")) return Promise.resolve(response({}, 409));
 
-			return Promise.resolve(response({ documents: ["id"], cursor: "" }));
+			return Promise.resolve(response({ doc_count: 1 }));
 		};
 
 		expect(await bootstrap({ url: "http://database", fetcher })).toEqual({

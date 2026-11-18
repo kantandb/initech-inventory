@@ -18,8 +18,15 @@ function item(overrides = {}) {
 
 function client(records = { "item-id": item() }) {
 	return {
-		list() {
-			return Promise.resolve({ documents: Object.keys(records), cursor: "" });
+		query() {
+			return Promise.resolve({
+				documents: Object.values(records).map(({ id, etag, ...doc }) => ({
+					id,
+					rev: etag.slice(1, -1),
+					doc,
+				})),
+				cursor: "",
+			});
 		},
 		read(id) {
 			const { etag, ...value } = records[id];
@@ -99,9 +106,6 @@ describe("UI routes", () => {
 	test("removes quantity changes that no longer match filters", async () => {
 		let record = item();
 		const database = {
-			list() {
-				return Promise.resolve({ documents: [record.id], cursor: "" });
-			},
 			read(id) {
 				const { etag, ...value } = record;
 				delete value.id;
@@ -109,7 +113,12 @@ describe("UI routes", () => {
 				return Promise.resolve({ id, etag, item: value });
 			},
 			query() {
-				return Promise.resolve({ documents: [record.id], cursor: "" });
+				const { id, etag, ...doc } = record;
+
+				return Promise.resolve({
+					documents: [{ id, rev: etag.slice(1, -1), doc }],
+					cursor: "",
+				});
 			},
 			patch(id, patch) {
 				record = { ...record, ...patch, etag: '"new"' };

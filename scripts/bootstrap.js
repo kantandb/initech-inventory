@@ -45,20 +45,20 @@ export async function bootstrap({
 	const create = await fetcher(endpoint(url, "/db"), {
 		method: "POST",
 		headers: { "content-type": "application/json" },
-		body: JSON.stringify({ name: database, indexes }),
+		body: JSON.stringify({ name: database, indices: indexes }),
 	});
 	if (create.status !== 201 && create.status !== 409) {
 		throw new Error(`Database creation failed: ${await failure(create)}`);
 	}
 
-	const path = `/db/${encodeURIComponent(database)}?limit=1`;
+	const path = `/db/${encodeURIComponent(database)}`;
 	const list = await fetcher(endpoint(url, path));
 	if (!list.ok) {
 		throw new Error(`Database check failed: ${await failure(list)}`);
 	}
 
-	const { documents } = await list.json();
-	if (documents.length > 0) {
+	const { doc_count } = await list.json();
+	if (doc_count !== 0) {
 		return { created: create.status === 201, imported: false };
 	}
 

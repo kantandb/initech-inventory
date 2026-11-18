@@ -58,8 +58,8 @@ describe("parseFilters", () => {
 });
 
 describe("InventoryService", () => {
-	test("hydrates, filters, and paginates items in name order", async () => {
-		const limits = [];
+	test("filters and paginates snapshot records without reads", async () => {
+		const queries = [];
 		const pages = [
 			{ documents: ["a", "b"], cursor: "next" },
 			{ documents: ["c"], cursor: "after" },
@@ -70,13 +70,19 @@ describe("InventoryService", () => {
 			c: item({ name: "Charlie", quantity: 15 }),
 		};
 		const client = {
-			list(options) {
-				limits.push(options.limit);
+			query(options) {
+				queries.push(options);
 
-				return Promise.resolve(pages.shift());
-			},
-			read(id) {
-				return Promise.resolve({ id, etag: `"${id}"`, item: records[id] });
+				const page = pages.shift();
+
+				return Promise.resolve({
+					...page,
+					documents: page.documents.map((id) => ({
+						id,
+						rev: id,
+						doc: records[id],
+					})),
+				});
 			},
 		};
 		const service = new InventoryService(client);
@@ -91,13 +97,19 @@ describe("InventoryService", () => {
 			],
 			cursor: "after",
 		});
-		expect(limits).toEqual([2, 1]);
+		expect(queries).toEqual([
+			{ index: "name", op: "ge", value: "", limit: 2, cursor: undefined },
+			{ index: "name", op: "ge", value: "", limit: 1, cursor: "next" },
+		]);
 	});
 
 	test("rejects part numbers already used by another item", async () => {
 		const client = {
 			query() {
-				return Promise.resolve({ documents: ["existing"], cursor: "" });
+				return Promise.resolve({
+					documents: [{ id: "existing", rev: "rev", doc: item() }],
+					cursor: "",
+				});
 			},
 		};
 		const service = new InventoryService(client);
@@ -115,6 +127,18 @@ describe("InventoryService", () => {
 				],
 			}),
 		);
+	});
+
+	test("allows part numbers already owned by the current item", async () => {
+		const value = item({ part_numbers: ["AB12-CDE3456"] });
+		const service = new InventoryService({
+			query: async () => ({
+				documents: [{ id: "current", rev: "rev", doc: value }],
+				cursor: "",
+			}),
+		});
+
+		await expect(service.validate(value, "current")).resolves.toBeUndefined();
 	});
 
 	test("validates a merged patch before mutation", async () => {

@@ -17,30 +17,37 @@ function mock(responses) {
 }
 
 describe("KantanClient", () => {
-	test("lists and queries document IDs", async () => {
+	test("lists and queries document records", async () => {
+		const one = { id: "one", rev: "first", doc: { name: "Alpha" } };
+		const two = { id: "two", rev: "second", doc: { name: "Beta" } };
+		const three = { id: "three", rev: "third", doc: { quantity: 10 } };
 		const { calls, fetcher } = mock([
-			json({ documents: ["one"], cursor: "next" }),
-			json({ documents: ["two"], cursor: "" }),
+			json({ documents: [one], cursor: "id-cursor" }),
+			json({ documents: [two], cursor: "index-cursor" }),
+			json({ documents: [three], cursor: "" }),
 		]);
 		const client = new KantanClient({ url: "http://db", fetcher });
 
-		expect(
-			await client.list({
-				limit: 10,
-				cursor: "cursor",
-				index: "name",
-				op: "ge",
-				value: "A",
-			}),
-		).toEqual({ documents: ["one"], cursor: "next" });
-		const listUrl = new URL(calls[0].url);
-		expect(Object.fromEntries(listUrl.searchParams)).toEqual({
-			limit: "10",
-			cursor: "cursor",
-			index: "name",
-			value: '"A"',
-			op: "ge",
+		expect(await client.list({ limit: 10, cursor: "previous-id" })).toEqual({
+			documents: [one],
+			cursor: "id-cursor",
 		});
+		expect(calls[0].url).toBe("http://db/db/inventory");
+		expect(calls[0].init.method).toBe("QUERY");
+		expect(JSON.parse(calls[0].init.body)).toEqual({
+			limit: 10,
+			cursor: "previous-id",
+		});
+
+		const namedQuery = { index: "name", op: "ge", value: "", limit: 1 };
+		expect(await client.query(namedQuery)).toEqual({
+			documents: [two],
+			cursor: "index-cursor",
+		});
+		expect(calls[1].url).toBe("http://db/db/inventory");
+		expect(calls[1].init.method).toBe("QUERY");
+		expect(calls[1].init.headers["content-type"]).toBe("application/json");
+		expect(JSON.parse(calls[1].init.body)).toEqual(namedQuery);
 
 		expect(
 			await client.query({
@@ -50,9 +57,9 @@ describe("KantanClient", () => {
 				limit: 5,
 				cursor: "next",
 			}),
-		).toEqual({ documents: ["two"], cursor: "" });
-		expect(calls[1].init.method).toBe("QUERY");
-		expect(JSON.parse(calls[1].init.body)).toEqual({
+		).toEqual({ documents: [three], cursor: "" });
+		expect(calls[2].init.method).toBe("QUERY");
+		expect(JSON.parse(calls[2].init.body)).toEqual({
 			path: "$.quantity",
 			value: 10,
 			limit: 5,
