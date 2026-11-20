@@ -104,17 +104,23 @@ export class KantanClient {
 		};
 	}
 
-	async query({ index, path, value, op, limit = 25, cursor } = {}) {
-		const body = { index, path, value, limit };
-		if (op) body.op = op;
-		if (cursor) body.cursor = cursor;
+	async query({ program = ".", limit = 25, cursor } = {}) {
+		const headers = {
+			"content-type": "text/plain",
+			accept: "application/json",
+			limit: String(limit),
+		};
+		if (cursor) headers.cursor = cursor;
 		const response = await this.request(this.collection(), {
 			method: "QUERY",
-			headers: { "content-type": "application/json" },
-			body: JSON.stringify(body),
+			headers,
+			body: program,
 		});
 
-		return response.json();
+		return {
+			documents: await response.json(),
+			cursor: response.headers.get("cursor") ?? "",
+		};
 	}
 
 	async delete(id, etag) {

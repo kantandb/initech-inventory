@@ -31,7 +31,7 @@ describe("bootstrap", () => {
 			if (url.endsWith("/healthz"))
 				return Promise.resolve(response({ status: "ok" }));
 			if (url.endsWith("/db")) return Promise.resolve(response({}, 201));
-			if (url.endsWith("/db/inventory")) {
+			if (url.endsWith("/db/inventory") && !init.method) {
 				return Promise.resolve(response({ doc_count: 0 }));
 			}
 
@@ -51,7 +51,7 @@ describe("bootstrap", () => {
 		});
 		expect(requests[2].url).toBe("http://database/db/inventory");
 		expect(requests[2].init.method ?? "GET").toBe("GET");
-		expect(requests.at(-1).url).toBe("http://database/bulk/inventory");
+		expect(requests.at(-1).url).toBe("http://database/db/inventory");
 		expect(requests.at(-1).init.headers).toEqual({
 			"content-type": "application/x-ndjson",
 		});

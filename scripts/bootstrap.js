@@ -63,14 +63,11 @@ export async function bootstrap({
 	}
 
 	const data = await Bun.file(fixture).text();
-	const imported = await fetcher(
-		endpoint(url, `/bulk/${encodeURIComponent(database)}`),
-		{
-			method: "POST",
-			headers: { "content-type": "application/x-ndjson" },
-			body: data,
-		},
-	);
+	const imported = await fetcher(endpoint(url, path), {
+		method: "POST",
+		headers: { "content-type": "application/x-ndjson" },
+		body: data,
+	});
 	if (!imported.ok) {
 		throw new Error(`Fixture import failed: ${await failure(imported)}`);
 	}

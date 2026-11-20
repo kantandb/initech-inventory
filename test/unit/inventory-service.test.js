@@ -79,7 +79,7 @@ describe("InventoryService", () => {
 					...page,
 					documents: page.documents.map((id) => ({
 						id,
-						rev: id,
+						rev: `"${id}"`,
 						doc: records[id],
 					})),
 				});
@@ -98,14 +98,19 @@ describe("InventoryService", () => {
 			cursor: "after",
 		});
 		expect(queries).toEqual([
-			{ index: "name", op: "ge", value: "", limit: 2, cursor: undefined },
-			{ index: "name", op: "ge", value: "", limit: 1, cursor: "next" },
+			{ program: 'select(.name >= "")', limit: 2, cursor: undefined },
+			{ program: 'select(.name >= "")', limit: 1, cursor: "next" },
 		]);
 	});
 
 	test("rejects part numbers already used by another item", async () => {
 		const client = {
-			query() {
+			query(options) {
+				expect(options).toEqual({
+					program: 'select(.part_numbers | contains(["AB12-CDE3456"]))',
+					limit: 2,
+				});
+
 				return Promise.resolve({
 					documents: [{ id: "existing", rev: "rev", doc: item() }],
 					cursor: "",

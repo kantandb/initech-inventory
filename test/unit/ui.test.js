@@ -22,7 +22,7 @@ function client(records = { "item-id": item() }) {
 			return Promise.resolve({
 				documents: Object.values(records).map(({ id, etag, ...doc }) => ({
 					id,
-					rev: etag.slice(1, -1),
+					rev: etag,
 					doc,
 				})),
 				cursor: "",
@@ -116,7 +116,7 @@ describe("UI routes", () => {
 				const { id, etag, ...doc } = record;
 
 				return Promise.resolve({
-					documents: [{ id, rev: etag.slice(1, -1), doc }],
+					documents: [{ id, rev: etag, doc }],
 					cursor: "",
 				});
 			},

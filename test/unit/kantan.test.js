@@ -17,14 +17,12 @@ function mock(responses) {
 }
 
 describe("KantanClient", () => {
-	test("lists and queries document records", async () => {
-		const one = { id: "one", rev: "first", doc: { name: "Alpha" } };
-		const two = { id: "two", rev: "second", doc: { name: "Beta" } };
-		const three = { id: "three", rev: "third", doc: { quantity: 10 } };
+	test("lists and queries jq records with pagination headers", async () => {
+		const one = { id: "one", rev: '"first"', doc: { name: "Alpha" } };
+		const two = { id: "two", rev: '"second"', doc: { name: "Beta" } };
 		const { calls, fetcher } = mock([
-			json({ documents: [one], cursor: "id-cursor" }),
-			json({ documents: [two], cursor: "index-cursor" }),
-			json({ documents: [three], cursor: "" }),
+			json([one], 200, { cursor: "id-cursor" }),
+			json([two]),
 		]);
 		const client = new KantanClient({ url: "http://db", fetcher });
 
@@ -32,40 +30,28 @@ describe("KantanClient", () => {
 			documents: [one],
 			cursor: "id-cursor",
 		});
-		expect(calls[0].url).toBe("http://db/db/inventory");
-		expect(calls[0].init.method).toBe("QUERY");
-		expect(JSON.parse(calls[0].init.body)).toEqual({
-			limit: 10,
-			cursor: "previous-id",
+		expect(calls[0]).toEqual({
+			url: "http://db/db/inventory",
+			init: {
+				method: "QUERY",
+				headers: {
+					"content-type": "text/plain",
+					accept: "application/json",
+					limit: "10",
+					cursor: "previous-id",
+				},
+				body: ".",
+			},
 		});
 
-		const namedQuery = { index: "name", op: "ge", value: "", limit: 1 };
-		expect(await client.query(namedQuery)).toEqual({
+		const program = 'select(.name >= "")';
+		expect(await client.query({ program, limit: 1 })).toEqual({
 			documents: [two],
-			cursor: "index-cursor",
+			cursor: "",
 		});
-		expect(calls[1].url).toBe("http://db/db/inventory");
-		expect(calls[1].init.method).toBe("QUERY");
-		expect(calls[1].init.headers["content-type"]).toBe("application/json");
-		expect(JSON.parse(calls[1].init.body)).toEqual(namedQuery);
-
-		expect(
-			await client.query({
-				path: "$.quantity",
-				op: "ge",
-				value: 10,
-				limit: 5,
-				cursor: "next",
-			}),
-		).toEqual({ documents: [three], cursor: "" });
-		expect(calls[2].init.method).toBe("QUERY");
-		expect(JSON.parse(calls[2].init.body)).toEqual({
-			path: "$.quantity",
-			value: 10,
-			limit: 5,
-			op: "ge",
-			cursor: "next",
-		});
+		expect(calls[1].init.body).toBe(program);
+		expect(calls[1].init.headers.limit).toBe("1");
+		expect(calls[1].init.headers).not.toHaveProperty("cursor");
 	});
 
 	test("reads and creates documents with ETags", async () => {

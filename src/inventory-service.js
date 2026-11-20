@@ -99,8 +99,7 @@ export class InventoryService {
 		const errors = [];
 		for (const [index, part] of item.part_numbers.entries()) {
 			const result = await this.client.query({
-				path: "$.part_numbers[*]",
-				value: part,
+				program: `select(.part_numbers | contains([${JSON.stringify(part)}]))`,
 				limit: 2,
 			});
 			if (result.documents.some(({ id }) => id !== currentId)) {
@@ -130,16 +129,15 @@ export class InventoryService {
 
 		do {
 			const page = await this.client.query({
-				index: "name",
-				op: "ge",
-				value: "",
+				// The leading name filter selects the index and preserves name order.
+				program: 'select(.name >= "")',
 				limit: filters.limit - items.length,
 				cursor,
 			});
 			// Use snapshot records without fetching each document again.
 			for (const { id, rev, doc } of page.documents) {
 				if (matches(doc, filters)) {
-					items.push({ ...doc, id, etag: `"${rev}"` });
+					items.push({ ...doc, id, etag: rev });
 				}
 			}
 			cursor = page.cursor || undefined;

@@ -20,36 +20,36 @@ test("client operations exist in the contract", () => {
 	expect(document.delete.operationId).toBe("deleteDocument");
 });
 
-test("GET returns database info and QUERY returns document records", () => {
+test("GET returns database info and QUERY returns jq records", () => {
 	expect(
 		collection.get.responses["200"].content["application/json"].schema.$ref,
 	).toBe("#/components/schemas/DatabaseInfo");
+	const schema =
+		collection.query.responses["200"].content["application/json"].schema;
+	expect(schema.type).toBe("array");
+	expect(schema.items.required).toEqual(["id", "rev", "doc"]);
+	expect(schema.items.properties.rev.description).toContain(
+		"including its quotes",
+	);
+	expect(collection.query.responses["200"].headers).toHaveProperty("Cursor");
+	expect(collection.query.requestBody.content["text/plain"].schema.type).toBe(
+		"string",
+	);
+});
+
+test("batch imports use the document collection", () => {
+	expect(collection.post.requestBody.content).toHaveProperty(
+		"application/x-ndjson",
+	);
 	expect(
-		contract.components.schemas.DocumentList.properties.documents.items.$ref,
-	).toBe("#/components/schemas/DocumentRecord");
-	expect(contract.components.schemas.DocumentRecord.required).toEqual([
-		"id",
-		"rev",
-		"doc",
-	]);
-	const { schema } = collection.query.requestBody.content["application/json"];
-	expect(schema.$ref).toBe("#/components/schemas/PathQuery");
-	expect(contract.components.schemas.PathQuery.oneOf).toEqual([
-		{ required: ["path", "value"], not: { required: ["index"] } },
-		{ required: ["index", "value"], not: { required: ["path"] } },
-		{
-			not: {
-				anyOf: ["index", "path", "op", "value"].map((field) => ({
-					required: [field],
-				})),
-			},
-		},
-	]);
+		collection.post.responses["200"].content["application/json"].schema.$ref,
+	).toBe("#/components/schemas/BulkResult");
+	expect(contract.paths).not.toHaveProperty("/bulk/{database}");
 });
 
 test("mutation and query media types match the client", () => {
 	expect(Object.keys(collection.query.requestBody.content)).toContain(
-		"application/json",
+		"text/plain",
 	);
 	expect(Object.keys(document.patch.requestBody.content)).toContain(
 		"application/merge-patch+json",
@@ -65,7 +65,13 @@ test("mutation and query media types match the client", () => {
 });
 
 test("client page sizes remain inside contract limits", () => {
-	const limit = contract.components.schemas.PathQuery.properties.limit;
+	const limit = collection.query.parameters.find(
+		({ name }) => name === "Limit",
+	).schema;
+	const cursor = collection.query.parameters.find(
+		({ name }) => name === "Cursor",
+	);
+	expect(cursor.in).toBe("header");
 
 	expect(limit.minimum).toBe(1);
 	expect(limit.maximum).toBeGreaterThanOrEqual(25);

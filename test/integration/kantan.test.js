@@ -74,16 +74,14 @@ describe("KantanDB integration", () => {
 			documents: [fixtureRecord],
 		} = await client.list();
 		const { id: fixtureId, doc: item, rev } = fixtureRecord;
-		const etag = `"${rev}"`;
+		const etag = rev;
 		const alpha = await client.create({ ...item, name: "Alpha Router" });
 		const page = await client.list({ limit: 1 });
 		expect(page.documents).toEqual([fixtureRecord]);
 		expect(page.cursor).not.toBe("");
 		expect(
 			(await client.list({ limit: 1, cursor: page.cursor })).documents,
-		).toEqual([
-			{ id: alpha.id, rev: alpha.etag.slice(1, -1), doc: alpha.item },
-		]);
+		).toEqual([{ id: alpha.id, rev: alpha.etag, doc: alpha.item }]);
 
 		const service = new InventoryService(client);
 		const filters = parseFilters(new URLSearchParams({ limit: "1" }));
@@ -95,6 +93,27 @@ describe("KantanDB integration", () => {
 			items: [{ ...item, id: fixtureId, etag }],
 			cursor: "",
 		});
+	});
+
+	test("checks part-number ownership with paginated jq filters", async () => {
+		const client = new KantanClient({ url, database: "inventory_order" });
+		const service = new InventoryService(client);
+		const { items } = await service.list(parseFilters(new URLSearchParams()));
+		const value = { ...items[0], part_numbers: ["AB12-CDE3456"] };
+		delete value.id;
+		delete value.etag;
+
+		const created = await service.create(value);
+		await expect(service.create(value)).rejects.toEqual(
+			expect.objectContaining({ status: 422 }),
+		);
+		const updated = await service.patch(
+			created.id,
+			{ quantity: 0 },
+			created.etag,
+		);
+		expect(updated.quantity).toBe(0);
+		await service.delete(updated.id, updated.etag);
 	});
 
 	test("runs CRUD, queries, and ETag conflict checks", async () => {
@@ -132,10 +151,12 @@ describe("KantanDB integration", () => {
 		);
 		expect(replaced.item).toEqual(replacedValue);
 		expect(
-			(await client.query({ path: "$.name", value: value.name })).documents,
-		).toEqual([
-			{ id: created.id, rev: replaced.etag.slice(1, -1), doc: replacedValue },
-		]);
+			(
+				await client.query({
+					program: `select(.name == ${JSON.stringify(value.name)})`,
+				})
+			).documents,
+		).toEqual([{ id: created.id, rev: replaced.etag, doc: replacedValue }]);
 
 		await client.delete(created.id, replaced.etag);
 		expect(client.read(created.id)).rejects.toBeInstanceOf(KantanError);
